@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>熊宝点餐 · 分享</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#FFF5F5,#FFF0F8,#F5F0FF);min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+        .card{background:#FFF;border-radius:28px;padding:40px 30px;box-shadow:0 10px 40px rgba(150,120,130,0.2);max-width:420px;width:100%}
+        .logo{font-size:5rem;animation:bounce 2s ease-in-out infinite}
+        @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+        h1{font-size:1.8rem;background:linear-gradient(135deg,#FF8FAB,#C9A8E8,#7ED6B6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:12px 0}
+        p{color:#8E7D8E;margin:8px 0;line-height:1.6}
+        .features{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:16px 0}
+        .feat{background:#FFF0F3;padding:8px 16px;border-radius:20px;font-size:0.85rem;color:#FF6B8A;font-weight:600}
+        .btn{display:inline-block;margin:6px;padding:14px 32px;border-radius:30px;font-weight:700;font-size:1rem;text-decoration:none;transition:all .3s}
+        .btn-open{background:linear-gradient(135deg,#FF8FAB,#FF6B8A);color:#fff;box-shadow:0 4px 18px rgba(255,107,138,0.4)}
+        .btn-open:hover{transform:translateY(-3px);box-shadow:0 6px 25px rgba(255,107,138,0.5)}
+        .btn-share{background:#fff;color:#FF8FAB;border:2px solid #FF8FAB}
+        .qr-box{margin:20px auto;padding:16px;background:#fff;border-radius:16px;display:inline-block;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+        .qr-box img{width:180px;height:180px}
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="logo">🐻‍❄️</div>
+    <h1>熊宝点餐</h1>
+    <p>🏮 收录洛阳21家热门餐厅 · 182道真实菜品</p>
+    <div class="features">
+        <span class="feat">🏮 洛阳本地8家</span>
+        <span class="feat">🔥 连锁品牌8家</span>
+        <span class="feat">🌍 全国品牌5家</span>
+        <span class="feat">🎰 美食轮盘</span>
+        <span class="feat">📲 可安装到桌面</span>
+    </div>
+    <div class="qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=PLACEHOLDER" alt="扫码打开" id="qrImg">
+    </div>
+    <p style="font-size:0.8rem;color:#BBA0B0">📱 扫描二维码即可打开</p>
+    <div>
+        <a href="index.html" class="btn btn-open">🍽️ 开始点餐</a>
+        <button class="btn btn-share" onclick="share()">🔗 分享给朋友</button>
+    </div>
+</div>
+<script>
+document.getElementById('qrImg').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(window.location.href.replace('share.html','index.html'));
+function share(){if(navigator.share){navigator.share({title:'熊宝点餐',text:'可爱点餐小程序！21家洛阳热门餐厅~',url:window.location.href.replace('share.html','index.html')}).catch(()=>{})}else{prompt('复制链接分享：',window.location.href.replace('share.html','index.html'))}}
+</script>
+</body>
+</html>
