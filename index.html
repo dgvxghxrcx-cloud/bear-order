@@ -124,7 +124,7 @@
         .wheel-result{margin-top:12px;font-size:1.05rem;font-weight:700;color:#FF6B8A;min-height:30px}
         .wheel-actions{display:flex;gap:8px;justify-content:center;margin-top:6px}
         .wheel-actions button{padding:8px 20px;border-radius:25px;border:none;font-weight:700;cursor:pointer;font-size:0.85rem}.wheel-actions .btn-go{background:linear-gradient(135deg,#FF8FAB,#FF6B8A);color:#fff}.wheel-actions .btn-retry{background:#F0E0E8;color:var(--text)}.wheel-actions .btn-close-w{background:var(--white);color:var(--text-light);border:2px solid #E0D0D8}
-        @media(max-width:768px){.wheel-container{width:250px;height:250px}}
+        @media(max-width:768px){.wheel-container{width:260px;height:260px;margin:0 auto}}
     </style>
 </head>
 <body>
@@ -135,6 +135,7 @@
     <header class="header">
     <div style="position:absolute;top:10px;right:16px;display:flex;gap:8px;z-index:10">
         <button id="installBtn" onclick="installPWA()" style="display:none;padding:7px 14px;border-radius:20px;border:none;background:linear-gradient(135deg,#FF8FAB,#FF6B8A);color:#fff;font-weight:700;cursor:pointer;font-size:0.8rem;box-shadow:0 2px 8px rgba(255,107,138,0.4)">📲 安装</button>
+        <button onclick="openOrders()" style="padding:7px 12px;border-radius:20px;border:2px solid #7ED6B6;background:#fff;color:#7ED6B6;font-weight:700;cursor:pointer;font-size:0.8rem">📋 订单</button>
         <button onclick="openShare()" style="padding:7px 14px;border-radius:20px;border:2px solid #FF8FAB;background:#fff;color:#FF8FAB;font-weight:700;cursor:pointer;font-size:0.8rem">🔗 分享</button>
     </div><span class="logo">🐻‍❄️</span><h1>熊宝点餐</h1><p class="subtitle">🏮 洛阳热门餐厅 · 扫码点餐 · 即点即走</p></header>
 
@@ -227,6 +228,42 @@ function shareWechat(){
     else{copyLink();showToast('链接已复制，去微信粘贴发送吧~');}
 }
 document.getElementById('shareOverlay').addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
+
+// ====== 订单历史 ======
+function saveOrder(order) {
+    const orders = JSON.parse(localStorage.getItem('bear_orders') || '[]');
+    orders.unshift(order);
+    if (orders.length > 50) orders.length = 50;
+    localStorage.setItem('bear_orders', JSON.stringify(orders));
+}
+function getOrders() {
+    return JSON.parse(localStorage.getItem('bear_orders') || '[]');
+}
+function openOrders() {
+    const orders = getOrders();
+    const el = document.getElementById('orderDetails');
+    if (orders.length === 0) {
+        el.innerHTML = '<div style="text-align:center;padding:20px"><span style="font-size:3rem;display:block">📭</span><p>暂无订单记录</p></div>';
+    } else {
+        let html = '';
+        orders.forEach(o => {
+            html += `<div style="background:#FFFAFC;border-radius:12px;padding:10px 14px;margin-bottom:8px;text-align:left">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-weight:700;color:#FF8FAB">🎫 ${o.orderNo}</span>
+                    <span style="font-size:0.72rem;color:var(--text-light)">${o.time}</span>
+                </div>`;
+            for (const [bn, items] of Object.entries(o.items)) {
+                html += `<div style="font-size:0.78rem;color:var(--text-light);margin-top:2px">🏷️ ${bn}: `;
+                html += items.map(i => `${i.emoji||''}${i.name}×${i.qty}`).join(', ');
+                html += `</div>`;
+            }
+            html += `<div style="text-align:right;font-weight:700;color:#FF6B8A;margin-top:4px">合计 ¥${o.total}</div></div>`;
+        });
+        el.innerHTML = html;
+    }
+    document.getElementById('modalTitle').textContent = '📋 我的订单';
+    document.getElementById('modalOverlay').style.display = 'flex';
+}
 
 // PWA 安装
 let deferredPrompt;
@@ -417,11 +454,16 @@ function checkoutLocal() {
         for (const it of items) html += `<div>${it.emoji} ${it.name}×${it.qty} <span style="float:right;color:#FF6B8A;">¥${it.subtotal%1===0?it.subtotal:it.subtotal.toFixed(1)}</span></div>`;
     }
     const td = total%1===0 ? total : total.toFixed(1);
+    const orderNo = 'XB' + Math.floor(Math.random()*9000+1000);
     html += `<div style="border-top:2px dashed #E0D0D8;margin-top:6px;padding-top:6px;font-weight:700;">合计 <span style="float:right;color:#FF6B8A;font-size:1.15rem;">¥${td}</span></div>`;
-    html += `<div style="margin-top:8px;text-align:center;font-weight:700;color:#FF8FAB;">🎫 取餐号：<span style="font-size:1.2rem;">XB${Math.floor(Math.random()*9000+1000)}</span></div>`;
+    html += `<div style="margin-top:8px;text-align:center;font-weight:700;color:#FF8FAB;">🎫 取餐号：<span style="font-size:1.2rem;">${orderNo}</span></div>`;
     
     document.getElementById('orderDetails').innerHTML = html;
+    document.getElementById('modalTitle').textContent = '下单成功！';
     document.getElementById('modalOverlay').style.display = 'flex';
+    
+    saveOrder({orderNo, items: brandGroups, total: td, time: new Date().toLocaleString()});
+    
     for (const k in cart) delete cart[k];
     renderCart();
     showToast('下单成功！🎉');
@@ -535,9 +577,12 @@ function openWheel(mode){
     drawWheel(0);
 }
 function drawWheel(angle){
-    const c=document.getElementById('wheelCanvas'),ctx=c.getContext('2d');
-    const cx=150,cy=150,r=142,n=wheelData.length,sa=2*Math.PI/n;
-    ctx.clearRect(0,0,300,300);
+    const c=document.getElementById('wheelCanvas'),container=c.parentElement;
+    const size=Math.min(container.clientWidth,container.clientHeight)||300;
+    if(c.width!==size){c.width=size;c.height=size}
+    const ctx=c.getContext('2d');
+    const cx=size/2,cy=size/2,r=size/2-6,n=wheelData.length,sa=2*Math.PI/n;
+    ctx.clearRect(0,0,size,size);
     for(let i=0;i<n;i++){
         const start=angle+i*sa-Math.PI/2,end=start+sa;
         ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
