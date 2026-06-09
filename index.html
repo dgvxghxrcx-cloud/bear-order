@@ -201,7 +201,16 @@
 // ====== 分享功能 ======
 function openShare(){
     const url = window.location.href;
-    document.getElementById('shareQR').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data='+encodeURIComponent(url);
+    const qrImg = document.getElementById('shareQR');
+    // 优先用 qrserver，失败则用备用
+    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(url);
+    qrImg.onerror = function(){
+        qrImg.src = 'https://api.qrcode-monkey.com/https://api.qrcode-monkey.com/tmp/empty.png'; // fallback
+        // 最终备用：隐藏图片，只显示链接
+        qrImg.style.display = 'none';
+        document.querySelector('#shareOverlay p').textContent = '📱 浏览器打开以下链接：';
+    };
+    qrImg.onload = function(){ qrImg.style.display = ''; };
     document.getElementById('shareLink').textContent = url;
     document.getElementById('shareOverlay').style.display = 'flex';
 }
@@ -218,7 +227,12 @@ function shareWechat(){
     else{copyLink();showToast('链接已复制，去微信粘贴发送吧~');}
 }
 document.getElementById('shareOverlay').addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
-</script>
+
+// PWA 安装
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display=''});
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(r=>{if(r.outcome==='accepted')document.getElementById('installBtn').style.display='none';deferredPrompt=null})}}
+
 // ==================== 数据加载 (双模式: API优先 + 内嵌回退) ====================
 const API = '/api';
 let BRAND_DATA = {};
@@ -538,19 +552,6 @@ document.getElementById('wheelOverlay').addEventListener('click',function(e){if(
     console.log('📦 使用内嵌数据（独立模式）');
     useEmbedded();
 })();
-</script>
-
-<script>
-// Service Worker
-if('serviceWorker' in navigator){
-    const swBlob = new Blob([atob('CmNvbnN0IENBQ0hFID0gJ2JlYXItb3JkZXItdjEnOwpjb25zdCBBU1NFVFMgPSBbJy8nLCcvaW5kZXguaHRtbCcsJy9hZG1pbi5odG1sJ107CgpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2luc3RhbGwnLCBlID0+IHsKICAgIGUud2FpdFVudGlsKGNhY2hlcy5vcGVuKENBQ0hFKS50aGVuKGMgPT4gYy5hZGRBbGwoQVNTRVRTKS5jYXRjaCgoKT0+e30pKSk7CiAgICBzZWxmLnNraXBXYWl0aW5nKCk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdhY3RpdmF0ZScsIGUgPT4gewogICAgZS53YWl0VW50aWwoY2FjaGVzLmtleXMoKS50aGVuKGtzID0+IFByb21pc2UuYWxsKGtzLmZpbHRlcihrPT5rIT09Q0FDSEUpLm1hcChrPT5jYWNoZXMuZGVsZXRlKGspKSkpKTsKICAgIHNlbGYuY2xpZW50cy5jbGFpbSgpOwp9KTsKCnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignZmV0Y2gnLCBlID0+IHsKICAgIGlmKGUucmVxdWVzdC5tZXRob2QgIT09ICdHRVQnKSByZXR1cm47CiAgICBlLnJlc3BvbmRXaXRoKAogICAgICAgIGNhY2hlcy5tYXRjaChlLnJlcXVlc3QpLnRoZW4oY2FjaGVkID0+CiAgICAgICAgICAgIGNhY2hlZCB8fCBmZXRjaChlLnJlcXVlc3QpLnRoZW4ocmVzcCA9PiB7CiAgICAgICAgICAgICAgICBpZihyZXNwLm9rKSB7CiAgICAgICAgICAgICAgICAgICAgY29uc3QgY2xvbmUgPSByZXNwLmNsb25lKCk7CiAgICAgICAgICAgICAgICAgICAgY2FjaGVzLm9wZW4oQ0FDSEUpLnRoZW4oYyA9PiBjLnB1dChlLnJlcXVlc3QsIGNsb25lKSk7CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICByZXR1cm4gcmVzcDsKICAgICAgICAgICAgfSkuY2F0Y2goKCkgPT4gY2FjaGVkIHx8IG5ldyBSZXNwb25zZSgnT2ZmbGluZScsIHtzdGF0dXM6NTAzfSkpCiAgICAgICAgKQogICAgKTsKfSk7Cg==')],{type:'application/javascript'});const swUrl=URL.createObjectURL(swBlob);navigator.serviceWorker.register(swUrl);
-}
-// PWA Install prompt
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBtn').style.display=''});
-function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(r=>{if(r.outcome==='accepted')document.getElementById('installBtn').style.display='none';deferredPrompt=null})}}
-// Share
-function shareApp(){if(navigator.share){navigator.share({title:'熊宝点餐',text:'可爱点餐小程序，21家洛阳热门餐厅！',url:window.location.href}).catch(()=>{})}else{prompt('复制链接分享：',window.location.href)}}
 </script>
 </body>
 </html>
